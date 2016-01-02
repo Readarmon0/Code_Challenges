@@ -3,82 +3,94 @@
 
 #include "stdafx.h"
 #include <iostream>
+#include <fstream>
+#include <string>
 
 using namespace std;
 
 
-/*
-int getndigit(double n, int d) {
-return (int) fmod((n / pow(10.0, d - 1)), 10.0);
-}
-
-int l13dp(double * x) {
-int * y = new int[1000];
-for (int i = 0; i < 40; i++) {
-for (int j = 0; j < 25; j++) {
-y[i * 25 + j] = getndigit(x[i], 25 - j);
-cout << y[i * 25 + j];
-}
-cout << endl;
-}
-return 0;
-}
-
 int main() {
-double * x = new double[40];
-x[0] = 7316717653133062491922511.0;
-x[1] = 9674426574742355349194934.0;
-x[2] = 9698352031277450632623957.0;
-x[3] = 8318016984801869478851843.0;
-x[4] = 8586156078911294949545950.0;
-x[5] = 1737958331952853208805511.0;
-x[6] = 1254069874715852386305071.0;
-x[7] = 5693290963295227443043557.0;
-x[8] = 6689664895044524452316173.0;
-x[9] = 1856403098711121722383113.0;
-x[10] = 6222989342338030813533627.0;
-x[11] = 6614282806444486645238749.0;
-x[12] = 3035890729629049156044077.0;
-x[13] = 2390713810515859307960866.0;
-x[14] = 7017242712188399879790879.0;
-x[15] = 2274921901699720888093776.0;
-x[16] = 6572733300105336788122023.0;
-x[17] = 5421809751254540594752243.0;
-x[18] = 5258490771167055601360483.0;
-x[19] = 9586446706324415722155397.0;
-x[20] = 5369781797784617406495514.0;
-x[21] = 9290862569321978468622482.0;
-x[22] = 8397224137565705605749026.0;
-x[23] = 1407972968652414535100474.0;
-x[24] = 8216637048440319989000889.0;
-x[25] = 5243450658541227588666881.0;
-x[26] = 1642717147992444292823086.0;
-x[27] = 3465674813919123162824586.0;
-x[28] = 1786645835912456652947654.0;
-x[29] = 5682848912883142607690042.0;
-x[30] = 2421902267105562632111110.0;
-x[31] = 9370544217506941658960408.0;
-x[32] = 0719840385096245544436298.0;
-x[33] = 1230987879927244284909188.0;
-x[34] = 8458015616609791913387549.0;
-x[35] = 9200524063689912560717606.0;
-x[36] = 0588611646710940507754100.0;
-x[37] = 2256983155200055935729725.0;
-x[38] = 7163626956188267042825248.0;
-x[39] = 3600823257530420752963450.0;
-int extra = l13dp(x);
-return 0;
+	int * tokens = new int[1000];
+	int i = 1, j;
+
+	string line;
+	ifstream myfile("example_8.txt");
+	char * cstr = new char[line.length() + 1];
+	if (myfile.is_open()) {
+		while (getline(myfile, line)) {
+			strcpy_s(cstr, line.length() + 1, line.c_str());
+			for (j = 0; j < 50; j++) {
+				tokens[i] = atoi(cstr + j);
+				i++;
+			}
+		}
+		myfile.close();
+	}
+
+	int prdct, max = 0;
+	for (i = 1; i <= 1000 - 13; i++) {
+		cout << tokens[i] << endl;
+		prdct = tokens[i] * tokens[i + 1] * tokens[i + 2] * tokens[i + 3] * tokens[i + 4] * tokens[i + 5] * tokens[i + 6] * tokens[i + 7] * tokens[i + 8] * tokens[i + 9] * tokens[i + 10] * tokens[i + 11] * tokens[i + 12];
+		if (max < prdct) {
+			max = prdct;
+		}
+	}
+	cout << max << endl;
+	return 0;
+}
+
+/*
+int main () {
+	int * tokens = new int[400];
+	int i = 0, j;
+
+	string line;
+	ifstream myfile ("example_11.txt");
+	char * cstr = new char[line.length() + 1];
+	char * ctxt = new char[line.length() + 1];
+	if (myfile.is_open()) {
+		while (getline(myfile, line)) {
+			strcpy_s(cstr, line.length() + 1, line.c_str());
+			strtok_s(cstr, " ", &ctxt);
+			tokens[20 * i + 1] = atoi(cstr);
+			for (j = 1; j < 20; j++) {
+				cstr = strtok_s(NULL, " ", &ctxt);
+				tokens[20 * i + j + 1] = atoi(cstr);
+			}
+			i++;
+		}
+		myfile.close();
+	}
+
+	int prdct, max = 0;
+	for (i = 0; i < 20; i++) {
+		for (j = 1; j <= 16; j++) {
+			prdct = tokens[i * 20 + j] * tokens[i * 20 + j + 1] * tokens[i * 20 + j + 2] * tokens[i * 20 + j + 3];
+			if (max < prdct)
+				max = prdct;
+		}
+	}
+	for (i = 0; i < 16; i++) {
+		for (j = 1; j <= 20; j++) {
+			prdct = tokens[i * 20 + j] * tokens[i * 20 + j + 20] * tokens[i * 20 + j + 40] * tokens[i * 20 + j + 60];
+			if (max < prdct)
+				max = prdct;
+		}
+	}
+	for (i = 0; i < 16; i++) {
+		for (j = 1; j <= 16; j++) {
+			prdct = tokens[i * 20 + j] * tokens[i * 20 + j + 21] * tokens[i * 20 + j + 42] * tokens[i * 20 + j + 63];
+			if (max < prdct)
+				max = prdct;
+		}
+		for (j = 4; j <= 20; j++) {
+			prdct = tokens[i * 20 + j] * tokens[i * 20 + j + 19] * tokens[i * 20 + j + 38] * tokens[i * 20 + j + 57];
+			if (max < prdct)
+				max = prdct;
+		}
+	}
+
+	cout << max << endl;
+	return 0;
 }
 */
-
-
-int main ()
-{
-  int i;
-  char buffer[256];
-  printf ("Enter a number: ");
-  fgets (buffer, 256, stdin);
-  i = atoi (buffer);
-  printf ("The value entered is %d. Its double is %d.\n",i,i*2);
-  return 0;
-}
