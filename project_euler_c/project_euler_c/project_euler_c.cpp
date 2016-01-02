@@ -71,13 +71,26 @@ return 0;
 }
 */
 
-int main() {
-	int i, j, k;
-	for (i = 1; i < 998; i++) {
-		for (j = 1; j < 999 - i; j++) {
-			if (pow(i, 2) + pow(j, 2) == pow(1000 - i - j, 2))
-				cout << i << "^2 + " << j << "^2 = " << (1000 - i - j) << "^2" << endl;
+double sumprime(double n) {
+	double sum = 0.0;
+	double i, j;
+	for (i = 2.0; i <= n; i++) {
+		for (j = 2.0; j <= i; j++) {
+			if (fmod(i, (double)j) == 0.0)
+				break;
+		}
+		if (j == i) {
+			cout << j << endl;
+			sum += j;
 		}
 	}
+
+	return sum;
+}
+
+
+
+int main() {
+	cout << sumprime(10000) << endl;
 	return 0;
 }
