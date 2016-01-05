@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include <iostream>
 #include <fstream>
+#include <list>
 #include <string>
 
 using namespace std;
@@ -69,12 +70,10 @@ return 0;
 */
 
 
-
 int main() {
-	string * tokens = new string[16000];
 	char * token = new char[CHAR_MAX];
 	char * next_token = new char[CHAR_MAX];
-	int i = 1;
+	list <string> tokens;
 
 	string line;
 	ifstream input("input_22.txt");
@@ -84,10 +83,8 @@ int main() {
 			strcpy_s(cstr, line.length() + 1, line.c_str());
 			token = strtok_s(cstr, "\",\"", &next_token);
 			while (token) {
-				string tstr(token);
-				tokens[i] = tstr;
+				tokens.push_back(token);
 				token = strtok_s(NULL, "\",\"", &next_token);
-				i++;
 			}
 		}
 		input.close();
@@ -95,8 +92,8 @@ int main() {
 
 	ofstream output("output_22.txt");
 	if (output.is_open()) {
-		for (int i = 1; i <= 1000; i++) {
-			output << tokens[i].c_str() << endl;
+		for (list<string>::iterator i = tokens.begin(); i != tokens.end(); i++) {
+			output << *i << endl;
 		}
 
 		output.close();
