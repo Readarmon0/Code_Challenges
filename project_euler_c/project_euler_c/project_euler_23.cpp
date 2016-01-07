@@ -6,8 +6,12 @@
 using namespace std;
 
 
+bool abundant(int * amic_sums, int i) {
+	return amic_sums[i] > i;
+}
+
 int sum_amic(int num) {
-	int i, j;
+	int i, j, k;
 
 	int sum;
 	int * amic_sums = new int[num - 1];
@@ -29,19 +33,12 @@ int sum_amic(int num) {
 	}
 	cout << endl;
 
-	sum = 0;
-	for (i = 2; i < num; i++) {
-		if (amic_sums[i] > num) {
-			sum += amic_sums[i];
-			cout << i << endl;
-		}
-	}
-	cout << endl;
+	
 
 	return sum;
 }
 
 int main() {
-	cout << sum_amic(10000) << endl;
+	cout << sum_amic(28123) << endl;
 	return 0;
 }
