@@ -12,8 +12,11 @@ bool abundant(int * amic_sums, int i) {
 
 int sum_amic(int num) {
 	int i, j, k;
-
 	int sum;
+
+	int * abun = new int[7000];
+	int cnt = 1;
+
 	int * amic_sums = new int[num - 1];
 	for (i = 1; i < num; i++) {
 		sum = 0;
@@ -29,11 +32,38 @@ int sum_amic(int num) {
 	}
 
 	for (i = 1; i < num; i++) {
-		cout << amic_sums[i] << endl;
+		if (amic_sums[i] > i) {
+			abun[cnt] = i;
+			cnt++;
+			// cout << i << " " << amic_sums[i] << endl;
+		}
 	}
 	cout << endl;
 
-	
+	sum = 0;
+	bool abun_sum;
+	for (i = 1; i <= num; i++) {
+		abun_sum = false;
+		for (j = 1; j <= 13929; j++) {
+			if (abun[j] > i)
+				break;
+			for (k = j + 1; k <= 13930; k++) {
+				if (abun[k] > i)
+					break;
+				if (abun[j] + abun[k] == i) {
+					abun_sum = true;
+					// cout << abun[j] << " + " << abun[k] << " = " << i << endl;
+					break;
+				}
+			}
+			if (abun_sum)
+				break;
+		}
+		if (!abun_sum) {
+			sum += i;
+			// cout << i << " " << sum << endl;
+		}
+	}
 
 	return sum;
 }
