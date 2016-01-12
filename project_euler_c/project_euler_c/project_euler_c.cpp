@@ -29,14 +29,14 @@ int sum_tri(int * tokens) {
 	int tkn_cnt = 1;
 	for (i = 1; i <= 100; i++) {
 		for (j = 1; j <= i; j++) {
-			cout << sums[tkn_cnt] << " ";
+			// cout << sums[tkn_cnt] << " ";
 			tkn_cnt++;
 		}
-		cout << endl;
+		// cout << endl;
 	}
 
 	int max = 0;
-	for (i = 106; i <= 5050; i++) {
+	for (i = 4951; i <= 5050; i++) {
 		if (max < sums[i])
 			max = sums[i];
 	}
@@ -59,11 +59,11 @@ int main() {
 			token = strtok_s(cstr, " ", &next_token);
 			while (token) {
 				tokens[i] = atoi(token);
-				cout << tokens[i] << " ";
+				// cout << tokens[i] << " ";
 				token = strtok_s(NULL, " ", &next_token);
 				i++;
 			}
-			cout << endl;
+			// cout << endl;
 		}
 		myfile.close();
 	}
