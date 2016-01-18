@@ -1,4 +1,305 @@
 /*
+fn plus_one(i: i32) -> i32 {
+    i + 1
+}
+
+// without type inference
+let f: fn(i32) -> i32 = plus_one;
+
+// with type inference
+let f = plus_one;
+
+let six = f(5);
+*/
+
+/*
+fn main() {
+    let x = 5; // x: i32
+
+    let (x, y) = (1, 2);
+
+    let x: i32 = 5;
+
+    let x = 5;
+    x = 10;
+
+    let mut x = 5; // mut x: i32
+    x = 10;
+}
+
+fn main() {
+    let x: i32;
+
+    println!("Hello world!");
+
+    println!("The value of x is: {}", x);
+}
+
+fn main() {
+    let x: i32 = 17;
+    {
+        let y: i32 = 3;
+        println!("The value of x is {} and value of y is {}", x, y);
+    }
+    println!("The value of x is {} and value of y is {}", x, y); // This won't work
+
+    let x: i32 = 8;
+    {
+        println!("{}", x); // Prints "8"
+        let x = 12;
+        println!("{}", x); // Prints "12"
+    }
+    println!("{}", x); // Prints "8"
+    let x = 42;
+    println!("{}", x); // Prints "42"
+
+    let mut x: i32 = 1;
+    x = 7;
+    let x = x; // x is now immutable and is bound to 7
+
+    let y = 4;
+    let y = "I can also be bound to text!"; // y is now of a different type
+}
+*/
+
+
+
+/*
+extern crate getopts;
+extern crate rustc_serialize;
+
+use getopts::Options;
+use std::env;
+
+fn print_usage(program: &str, opts: Options) {
+    println!("{}", opts.usage(&format!("Usage: {} [options] <city>", program)));
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    let program = args[0].clone();
+
+    let mut opts = Options::new();
+    opts.optopt("f", "file", "Choose an input file, instead of using STDIN.", "NAME");
+    opts.optflag("h", "help", "Show this usage message.");
+
+    let matches = match opts.parse(&args[l..]) {
+        Ok(m) => { m }
+        Err(e) => { panic!(e.to string()) }
+    };
+
+    if matches.opt_present("h") {
+        print_usage(&program, opts);
+        return;
+    }
+
+    let data_path = args[1].clone();
+
+    let file = matches.opt_str("f");
+    let date_file = file.as_ref().map(Path::new);
+
+    let city = if !matches.free.is_empty() {
+        matches.free[0].clone()
+    } else {
+        print_usage(&program, opts);
+        return;
+    };
+
+    for pop in search(&data_file, &city) {
+        println!("{}, {}: {:?}", pop.city, pop.country, pop.count);
+    }
+
+    // Do stuff with information
+}
+
+#[derive(Debug, RustcDecodable)]
+struct Row {
+    country: String,
+    city: String,
+    accent_city: String,
+    region: String,
+
+    population: Option<u64>,
+    latitude: Option<f64>,
+    longitude: Option<f64>,
+}
+
+struct PopulationCount {
+    city: String,
+    country: String,
+    // This is not longer an "Option" because values of this type are only
+    // constructed if they have a population count.
+    count: u64,
+}
+
+fn print_usage(program: &str, opts: Options) {
+    println!("{}", opts.usage(&format!("Usage: {} [options] <data-path> <city>", program)));
+}
+
+fn search<P: AsRef<Path>>(file_path: P, city: &str) -> Result<Vec<PopulationCount>, Box<Error + Send + Sync>> {
+    let mut found = vec![];
+    let file = fs::File::open(file_path).unwrap();
+    let mut rdr = csv::Reader::from_reader(file);
+    for row in rdr.decode::<Row>() {
+        let row = try!(row);
+        match row.population {
+            None => { } // skip it
+            Some(count) => if row.city == city {
+                found.push(PopuationCount {
+                    city: row.city,
+                    country: row.country,
+                    count: count,
+                });
+            },
+        }
+    }
+    if found.is_empty() {
+        Err(From::from("No matching cities with a population were found."))
+    } else {
+        Ok(found)
+    }
+}
+
+fn main() {
+    let args: Vec<String> = evn::args().collect();
+    let program = args[0].clone();
+
+    let mut opts = Options::new();
+    opts.optflag("h", "help", "Show this usage message.");
+
+    let matches = match opts.parse(&args[l..]) {
+        Ok(m)  => { m }
+        Err(e) => { panic!(e.to_string()) }
+    };
+
+    if matches.opt_present("h") {
+        print_usage(&program, opts);
+        return;
+    }
+
+    let data_file = args[l].clone();
+    let data_path = Path::new(&data_file);
+    let city = args[2].clone();
+    for pop in search(&data_path, &city) {
+        println!("{}, {}: {:?}", pop.city, pop.country, pop.count);
+    }
+}
+*/
+
+/*
+fn main() {
+    let file_name = "foobar.rs";
+    match find(file_name, '.') {
+        None => println!("No file extension found."),
+        Some(i) => println!("File extension: {}", &file_name[i + 1..]),
+    }
+}
+
+// Returns the extension of the given file name, where the extension is defined
+// as all characters proceeding the first
+// If 'file_name' has no '.', then 'None' is returned.
+fn extension_explicit(file_name: &str) -> Option<&str> {
+    match find(file_name, '.') {
+        None => None,
+        Some(i) => Some(&file_name[i + 1..]),
+    }
+}
+
+fn map<F, T, A>(option: Option<T>, f: F) -> Option<A> where F: FnOnce(t) -> A {
+    match option {
+        None => None,
+        Some(value) => Some(f(value)),
+    }
+}
+
+// Returns the extension of the given file name, where the extension is defined
+// as all characters proceeding the first `.`.
+// If `file_name` has no `.`, then `None` is returned.
+fn extension(file_name: &str) -> Option<&str> {
+    find(file_name, '.').map(|i| &file_name[i + 1..])
+}
+
+fn unwrap_or<T>(option: Option<T>, default: T) -> T {
+    match option {
+        None => default,
+        Some(value) => value,
+    }
+}
+
+fn main() {
+    assert_eq!(extension("foobar.csv").unwrap_or("rs"), "csv");
+    assert_eq!(extension("foobar").unwrap_or("rs"), "rs");
+}
+
+fn file_path_ext_explicit(file_path: &str) -> Option<&str> {
+    match file_name(file_path) {
+        None => None,
+        Some(name) => match extension(name) {
+            None => None,
+            Some(ext) => Some(ext),
+        }
+    }
+}
+
+fn file_name(file_path: &str) -> Option<&str> {
+    // implementation elided
+    unimplemented!()
+}
+
+fn and_then<F, T, A>(option: Option<T>, f: F) -> Option<A> where F: FnOnce(T) -> Option<A> {
+    match option {
+        None => None,
+        Some(value) => f(value),
+    }
+}
+
+fn file_path_ext(file_path: &str) -> Option<&str> {
+    file_name(file_path).and_then(extension)
+}
+
+use std::num::ParseIntError;
+use std::result;
+
+type Result<T> = result::Result<T, ParseIntError>;
+
+fn double_number(number_str: &str) -> Result<i32, ParseIntError> {
+    number_str.parse::<i32>().map(|n| 2 * n)
+}
+
+fn main() {
+    match double_number("10") {
+        Ok(n) => assert_eq!(n, 20);
+        Err(err) => println!("Error: {:?}", err),
+}
+*/
+
+/*
+use std::env;
+
+fn main() {
+    let mut argv = env::args();
+    let arg: String = argv.nth(1).unwrap(); // error 1
+    let n: i32 = arg.parse().unwrap(); // error 2
+    println!("{}", 2 * n);
+}
+*/
+
+/*
+// Guess a number between 1 and 10.
+// If it matches the number we had in mind, return true. Else, return false.
+fn guess(n: i32) -> bool {
+    if n < 1 || n > 10 {
+        panic!("Invalid number: {}", n);
+    }
+    n == 5
+}
+
+fn main() {
+    guess(11);
+}
+*/
+
+/*
 use std::io::{BufRead, BufReader, Read, stdin};
 
 fn main() {
