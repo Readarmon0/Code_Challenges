@@ -45,7 +45,7 @@ function main() {
 /*
 // ClickedPoints.js
 // Vertex shader program
-var VSHADAR_SOURCE = 
+var VSHADER_SOURCE = 
 	'attribute vec4 a_Position;\n' +
 	'void main() {\n' +
 	'	gl_Position = a_Position;\n' +
