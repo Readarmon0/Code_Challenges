@@ -1,13 +1,12 @@
-var VSHADER_SOURCE = 
+var VSHADER_SOURCE =
 	'attribute vec4 a_Position;\n' +
 	'void main() {\n' +
 	'	gl_Position = a_Position;\n' +
-	'	gl_PointSize = 10.0;\n' +
 	'}\n';
 // Fragment shader program
 var FSHADER_SOURCE =
 	'void main() {\n' +
-	'	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n' + // Set the color
+	'	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n' +
 	'}\n';
 function main() {
 	// Retrieve <canvas> element
@@ -23,115 +22,6 @@ function main() {
 		console.log('Failed to initialize shaders.');
 		return;
 	}
-	// Get the storage location of a a_Position variable
-	var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-	if (a_Position < 0) {
-		console.log('Failed to get the storage location of a_Position');
-		return;
-	}
-	// ...
-	// Register function (event handler) to be called to a mouse press
-	canvas.onmousedown = function(ev) { click(ev, gl, canvas, a_Position); };
-	var a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
-	// Set vertex position to attribute variable
-	gl.vertexAttrib3f(a_Position, 0.0, 0.0, 0.0);
-	gl.vertexAttrib1f(a_PointSize, 5.0);
-	// Set the color for clearing <canvas>
-	gl.clearColor(0.0, 0.0, 0.0, 1.0);
-	// Clear <canvas>
-	gl.clear(gl.COLOR_BUFFER_BIT);
-	// Draw a point
-	gl.drawArrays(gl.POINTS, 0, 1);
-}
-var g_points = []; // The array for a mouse press
-function click(ev, gl, canvas, a_Position) {
-	var x = ev.clientX; // x coordinate of a mouse pointer
-	var y = ev.clientY; // y coordinate of a mouse pointer
-	var rect = ev.target.getBoundingClientRect();
-	x = ((x - rect.left) - canvas.height / 2) / (canvas.height / 2);
-	y = (canvas.width / 2 - (y - rect.top)) / (canvas.width / 2);
-	// Store the coordinates to g_points array
-	g_points.push(x); g_points.push(y);
-	// Clear <canvas>
-	gl.clear(gl.COLOR_BUFFER_BIT);
-	var len = g_points.length;
-	for (var i = 0; i < len; i += 2) {
-		// Pass the position of a point to a_Position variable
-		gl.vertexAttrib3f(a_Position, g_points[i], g_points[i + 1], 0.0);
-		// Draw a point
-		gl.drawArrays(gl.POINTS, 0, 1);
-	}
-}
-
-/*
-// ClickedPoints.js
-// Vertex shader program
-var VSHADER_SOURCE = 
-	'attribute vec4 a_Position;\n' +
-	'void main() {\n' +
-	'	gl_Position = a_Position;\n' +
-	'	gl_PointSize = 10.0;\n' +
-	'}\n';
-// Fragment shader program
-// ...
-function main() {
-	// Retrieve <canvas> element
-	var canvas = document.getElementById('webgl');
-	// Get the rendering context for WebGL
-	var gl = getWebGLContext(canvas);
-	// ...
-	// Initialize shaders
-	if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-	// ...
-	}
-	// Get the storage location of a a_Position variable
-	var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-	// ...
-	// Register function (event handler) to be called to a mouse press
-	canvas.onmousedown = function(ev) {click(ev, gl, canvas, a_Position);};
-	// ...
-	gl.clear(gl.COLOR_BUFFER_BIT);
-}
-var g_points = []; // The array for a mouse press
-function click(ev, gl, canvas, a_Position) {
-	var x = ev.clientX; // x coordinate of a mouse pointer
-	var y = ev.clientY; // y coordinate of a mouse pointer
-	var rect = ev.target.getBoundingClientRect();
-	x = ((x - rect.left) - canvas.height / 2) / (canvas.height / 2);
-	y = (canvas.width / 2 - (y - rect.top)) / (canvas.width / 2);
-	// Store the coordinates to g_points array
-	g_points.push(x); g_points.push(y);
-	// Clear <canvas>
-	// gl.clear(gl.COLOR_BUFFER_BIT);
-	var len = g_points.length;
-	for (var i = 0; i < len; i += 2) {
-		// Pass the position of a point to a_Position variable
-		gl.vertexAttrib3f(a_Position, g_points[i], g_poitns[i + 1], 0.0);
-		// Draw a point
-		gl.drawArrays(gl.POINTS, 0, 1);
-	}
-}
-
-
-// MultiPoint.js
-// Vertex shader program
-var VSHADER_SOURCE =
-	'attribute vec4 a_Position;\n' +
-	'void main() {\n' +
-	'	gl_Position = a_Position;\n' +
-	'	gl_PointSize = 10.0;\n' +
-	'}\n';
-// Fragment shader program
-// ...
-function main() {
-	// ...
-	// Get the rendering context for WebGL
-	var gl = getWebGLContext(canvas);
-	// ...
-	// Initialize shaders
-	if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-		// ...
-	}
 	// Set the positions of vertices
 	var n = initVertexBuffers(gl);
 	if (n < 0) {
@@ -139,11 +29,11 @@ function main() {
 		return;
 	}
 	// Set the color for clearing <canvas>
-	// ...
+	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	// Clear <canvas>
-	// ...
+	gl.clear(gl.COLOR_BUFFER_BIT);
 	// Draw three points
-	gl.drawArrays(gl.POINTS, 0, n); // n is 3
+	gl.drawArrays(gl.TRIANGLES, 0, n); // n is 3
 }
 function initVertexBuffers(gl) {
 	var vertices = new Float32Array([
@@ -161,8 +51,11 @@ function initVertexBuffers(gl) {
 	// Write date into the buffer object
 	gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 	var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-	// ...
-	// Assign the buffer object to a_Position variable
+	if (a_Position < 0) {
+		console.log('Fail to get the storage location of a_Position');
+		return;
+	}
+	// Assign the buffer object to a a_Position variable
 	gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
 	// Enable the assignment to a_Position variable
 	gl.enableVertexAttribArray(a_Position);
@@ -170,47 +63,7 @@ function initVertexBuffers(gl) {
 }
 
 
-// HelloTriangle.js
-// Vertex shader program
-var VSHADER_SOURCE =
-	'attribute vec4 a_Position;\n' +
-	'void main() {\n' +
-	'	gl_Position = a_Position;\n' +
-	'}\n';
-// Fragment shader program
-var FSHADER_SOURCE =
-	'void main() {\n' +
-	'	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n' +
-	'}\n';
-function main() {
-	// ...
-	// Get the rendering context for WebGL
-	var gl = getWebGLContext(canvas);
-	// ...
-	// Initialize shaders
-	if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-		// ...
-	}
-	// Set the positions of vertices
-	var n = initVertexBuffers(gl);
-	// ...
-	// Set the color for clearing <canvas>
-	// ...
-	// Clear <canvas>
-	// ...
-	// Draw a triangle
-	gl.drawArrays(gl.TRIANGLES, 0, n); // n is 3
-}
-function initVertexBuffers(gl) {
-	var vertices = new Float32Array([
-		0.0, 0.5, -0.5, -0.5, 0.5, -0.5
-	]);
-	var n = 3; // The number of vertices	
-	// ...
-	return n;
-}
-
-
+/*
 // TranslatedTriangle.js
 // Vertex shader program
 var VSHADER_SOURCE =
