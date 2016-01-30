@@ -1,13 +1,16 @@
-var VSHADER_SOURCE =
+var VSHADER_SOURCE = 
 	'attribute vec4 a_Position;\n' +
+	'uniform mat4 u_xformMatrix;\n' +
 	'void main() {\n' +
-	'	gl_Position = a_Position;\n' +
+	'	gl_Position = u_xformMatrix * a_Position;\n' +
 	'}\n';
 // Fragment shader program
 var FSHADER_SOURCE =
 	'void main() {\n' +
 	'	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n' +
 	'}\n';
+// Rotation angle (degrees/second)
+var ANGLE = 90.0;
 function main() {
 	// Retrieve <canvas> element
 	var canvas = document.getElementById('webgl');
@@ -28,15 +31,29 @@ function main() {
 		console.log('Failed to set the positions of the vertices');
 		return;
 	}
+	// Create a rotation matrix
+	var radian = Math.PI * ANGLE / 180.0; // Convert to radians
+	var cosB = Math.cos(radian), sinB = Math.sin(radian);
+	// Note: WebGL is column major order
+	var xformMatrix = new Float32Array([
+		 cosB, sinB, 0.0, 0.0,
+		-sinB, cosB, 0.0, 0.0,
+		  0.0,  0.0, 1.0, 0.0,
+		  0.0,  0.0, 0.0, 1.0
+		]);
+	// Pass the rotation matrix to the vertex shader
+	var u_xformMatrix = gl.getUniformLocation(gl.program, 'u_xformMatrix');
+
+	gl.uniformMatrix4fv(u_xformMatrix, false, xformMatrix);
 	// Set the color for clearing <canvas>
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	// Clear <canvas>
 	gl.clear(gl.COLOR_BUFFER_BIT);
-	// Draw three points
-	gl.drawArrays(gl.TRIANGLES, 0, n); // n is 3
+	// Draw a triangle
+	gl.drawArrays(gl.TRIANGLES, 0, n);
 }
 function initVertexBuffers(gl) {
-	var vertices = new Float32Array([
+	var vertices = new Float32Array ([
 		0.0, 0.5, -0.5, -0.5, 0.5, -0.5
 	]);
 	var n = 3; // The number of vertices
@@ -60,6 +77,27 @@ function initVertexBuffers(gl) {
 	// Enable the assignment to a_Position variable
 	gl.enableVertexAttribArray(a_Position);
 	return n;
+}
+function draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix) {
+	// Set up rotation matrix
+	modelMatrix.setRotate(currentAngle, 0, 0, 1);
+	// Pass the rotation matrix to the vertex shader
+	gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+	// Clear <canvas>
+	gl.clear(gl.COLOR_BUFFER_BIT);
+	// Draw a triangle
+	gl.drawArrays(gl.TRIANGLES, 0, n);
+}
+// Last time when this function was called
+var g_last = Date.now();
+function animate(angle) {
+	// Calculate the elapsed time
+	var now = Date.now();
+	var elapsed = now - g_last; // milliseconds
+	g_last = now;
+	// Update the current rotation angle (adjusted by the elapsed time)
+	var newAngle = angle + (ANGLE_STEP + elapsed) / 1000.0;
+	return newAngle %= 360;
 }
 
 
@@ -160,33 +198,12 @@ function initVertexBuffers(gl) {
 
 // RotatedTriangle_Matrix.js
 // Vertex shader program
-var VSHADER_SOURCE =
-	'attribute vec4 a_Position;\n' +
-	'uniform mat4 u_xformMatrix;\n' +
-	'void main() {\n' +
-	'	gl_Position = u_xformMatrix * a_Position;\n' +
-	'}\n';
-// Fragment shader program
-// ...
-// Rotation angle
-var ANGLE = 90.0;
 function main() {
 	// ...
 	// Set the positions of vertices
 	var n = initVertexBuffers(gl);
 	// ...
-	// Create a rotation matrix
-	var radian = Math.PI * ANGLE / 180.0; // Convert to radians
-	var cosB = Math.cos(radian), sinB = Math.sin(radian);
-	// Note: WebGL is column major order
-	var xformMatrix = new Float32Array([
-		cosB, sinB, 0.0, 0.0,
-		-sinB, cosB, 0.0, 0.0,
-		0.0, 0.0, 1.0, 0.0,
-		0.0, 0.0, 0.0, 1.0
-		]);
-	// Pass the rotation matrix to the vertex shader
-	var u_xformMatrix = gl.getUniformLocation(gl.program, 'u_xformMatrix');
+	
 	// ...
 	gl.uniformMatrix4fv(u_xformMatrix, false, xformMatrix);
 	// Set the color for clearing <canvas>
@@ -279,35 +296,7 @@ function main() {
 	};
 	tick();
 }
-function initVertexBuffers(gl) {
-	var vertices = new Float32Array ([
-		0.0, 0.5, -0.5, -0.5, 0.5, -0.5
-	]);
-	var n = 3; // The number of vertices
-	// ...
-	return n;
-}
-function draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix) {
-	// Set up rotation matrix
-	modelMatrix.setRotate(currentAngle, 0, 0, 1);
-	// Pass the rotation matrix to the vertex shader
-	gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-	// Clear <canvas>
-	gl.clear(gl.COLOR_BUFFER_BIT);
-	// Draw a triangle
-	gl.drawArrays(gl.TRIANGLES, 0, n);
-}
-// Last time when this function was called
-var g_last = Date.now();
-function animate(angle) {
-	// Calculate the elapsed time
-	var now = Date.now();
-	var elapsed = now - g_last; // milliseconds
-	g_last = now;
-	// Update the current rotation angle (adjusted by the elapsed time)
-	var newAngle = angle + (ANGLE_STEP + elapsed) / 1000.0;
-	return newAngle %= 360;
-}
+
 
 
 // MultiAttributeSize.js
