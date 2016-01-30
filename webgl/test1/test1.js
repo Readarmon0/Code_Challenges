@@ -6,8 +6,11 @@ var VSHADER_SOURCE =
 	'}\n';
 // Fragment shader program
 var FSHADER_SOURCE =
+	'precision mediump float;\n' +
+	'uniform float u_Width;\n' +
+	'uniform float u_Height;\n' +
 	'void main() {\n' +
-	'	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n' +
+	'  gl_FragColor = vec4(gl_FragCoord.x/u_Width, 0.0, gl_FragCoord.y/u_Height, 1.0);\n' +
 	'}\n';
 // Rotation angle (degrees/second)
 var ANGLE_STEP = 90.0;
@@ -83,14 +86,29 @@ function initVertexBuffers(gl) {
 	}
 	// Assign the buffer object to a a_Position variable
 	gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
-	// Enable the assignment to a_Position variable
+	var u_Width = gl.getUniformLocation(gl.program, 'u_Width');
+	if (!u_Width) {
+		console.log('Failed to get the storage location of u_Width');
+		return;
+	}
+	var u_Height = gl.getUniformLocation(gl.program, 'u_Height');
+	if (!u_Height) {
+		console.log('Failed to get the storage location of u_Height');
+		return;
+	}
+	// Pass the width and height of the <canvas>
+	gl.uniform1f(u_Width, gl.drawingBufferWidth);
+	gl.uniform1f(u_Height, gl.drawingBufferHeight)
+	// Enable the generic vertex attrbute array
 	gl.enableVertexAttribArray(a_Position);
+	// Unbind the buffer object
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	return n;
 }
 function draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix) {
 	// Set up rotation matrix
-	modelMatrix.translate(Tx, 0, 0);
-	modelMatrix.setRotate(currentAngle, 0, 0, 1);
+	modelMatrix.setTranslate(Tx, 0, 0);
+	modelMatrix.rotate(currentAngle, 0, 0, 1);
 	// Pass the rotation matrix to the vertex shader
 	gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
 	// Clear <canvas>
