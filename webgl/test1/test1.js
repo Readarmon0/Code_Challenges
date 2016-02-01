@@ -10,7 +10,7 @@ var FSHADER_SOURCE =
 	'uniform float u_Width;\n' +
 	'uniform float u_Height;\n' +
 	'void main() {\n' +
-	'  gl_FragColor = vec4(gl_FragCoord.x/u_Width, 0.0, gl_FragCoord.y/u_Height, 1.0);\n' +
+	'	gl_FragColor = vec4(gl_FragCoord.x/u_Width, 0.0, gl_FragCoord.y/u_Height, 1.0);\n' +
 	'}\n';
 // Rotation angle (degrees/second)
 var ANGLE_STEP = 90.0;
@@ -38,28 +38,24 @@ function main() {
 	// Create a rotation matrix
 	var radian = Math.PI * ANGLE_STEP / 180.0; // Convert to radians
 	var cosB = Math.cos(radian), sinB = Math.sin(radian);
-	// Note: WebGL is column major order
-	var xformMatrix = new Float32Array([
-		 cosB, sinB, 0.0, 0.0,
-		-sinB, cosB, 0.0, 0.0,
-		  0.0,  0.0, 1.0, 0.0,
-		  0.0,  0.0, 0.0, 1.0
-		]);
 	// Set the color for clearing <canvas>
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	// Clear <canvas>
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	// Pass the rotation matrix to the vertex shader
 	var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
-
 	// Current rotation angle of a triangle
-	var currentAngle = 0.0;
+	var current = [0.0, 0.0, 0.0];
 	// Matrix4 object for model transformation
 	var modelMatrix = new Matrix4();
-	// Star to draw a triangle
+
+	// Register the event handler
+	initEventHandlers(canvas, current);
+
+	// Start to draw a triangle
 	var tick = function() {
-		currentAngle = animate(currentAngle); // Update the rotation angle
-		draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix);
+		animate(current); // Update the rotation angle
+		draw(gl, n, current, modelMatrix, u_ModelMatrix);
 		requestAnimationFrame(tick); // Request that the browser calls tick
 	};
 	tick();
@@ -105,27 +101,63 @@ function initVertexBuffers(gl) {
 	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	return n;
 }
-function draw(gl, n, currentAngle, modelMatrix, u_ModelMatrix) {
-	// Set up rotation matrix
-	modelMatrix.setTranslate(Tx, 0, 0);
-	modelMatrix.rotate(currentAngle, 0, 0, 1);
-	// Pass the rotation matrix to the vertex shader
-	gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+function initEventHandlers(canvas, current) {
+	var dragging = false;         // Dragging or not
+	var lastX = -1, lastY = -1;   // Last position of the mouse
+
+	canvas.onmousedown = function(ev) {   // Mouse is pressed
+		var x = ev.clientX, y = ev.clientY;
+		// Start dragging if a moue is in <canvas>
+		var rect = ev.target.getBoundingClientRect();
+		if (rect.left <= x && x < rect.right && rect.top <= y && y < rect.bottom) {
+			lastX = x; lastY = y;
+			dragging = true;
+		}
+	};
+
+	canvas.onmouseup = function(ev) { dragging = false;  }; // Mouse is released
+
+	canvas.onmousemove = function(ev) { // Mouse is moved
+		var x = ev.clientX, y = ev.clientY;
+		if (dragging) {
+			var factor = 100/canvas.height; // The rotation ratio
+			var dx = factor * (x - lastX);
+			var dy = factor * (y - lastY);
+			// Limit x-axis rotation angle to -90 to 90 degrees
+			// currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
+			current[0] += 20.0;
+			current[1] += dx / 10.0;
+			current[2] -= dy / 10.0;
+		}
+		lastX = x, lastY = y;
+	};
+}
+function draw(gl, n, current, modelMatrix, u_ModelMatrix) {
 	// Clear <canvas>
 	gl.clear(gl.COLOR_BUFFER_BIT);
-	// Draw a triangle
-	gl.drawArrays(gl.TRIANGLES, 0, n);
+
+	for (var i = -1; i < n - 1; i++) {
+		for (var j = -1; j < n - 1; j++) {
+			// Set up rotation matrix
+			modelMatrix.setTranslate(Tx * i + current[1], Tx * j + current[2], 0);
+			modelMatrix.rotate(current[0], 0, 0, 1);
+			// Pass the rotation matrix to the vertex shader
+			gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+			// Draw a triangle
+			gl.drawArrays(gl.TRIANGLES, 0, n);
+		}
+	}
 }
 // Last time when this function was called
 var g_last = Date.now();
-function animate(angle) {
+function animate(current) {
 	// Calculate the elapsed time
 	var now = Date.now();
 	var elapsed = now - g_last; // milliseconds
 	g_last = now;
 	// Update the current rotation angle (adjusted by the elapsed time)
-	var newAngle = angle + (ANGLE_STEP * elapsed) / 1000.0;
-	return newAngle %= 360;
+	current[0] = current[0] + (ANGLE_STEP * elapsed) / 1000.0;
+	current[0] %= 360;
 }
 function up() {
   ANGLE_STEP += 10; 
@@ -137,190 +169,6 @@ function down() {
 
 
 /*
-// TranslatedTriangle.js
-// Vertex shader program
-var VSHADER_SOURCE =
-	'attribute vec4 a_Position;\n' +
-	'uniform vec4 u_translation;\n' +
-	'void main() {\n' +
-	'	gl_Position = a_Position + u_Translation;\n' +
-	'}\n';
-// Fragment shader program
-// ...
-// The translation distance for x, y, and z direction
-var Tx = 0.5, Ty = 0.5, Tz = 0.0;
-function main() {
-	// ...
-	// Get the rendering context for WebGL
-	var gl = getWebGLContext(canvas);
-	// ...
-	// Initialize shaders
-	if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-	// ...
-	}
-	// Set the positions of vertices
-	var n = initVertexBuffers(gl);
-	// ...
-	// Pass the translation distance to the vertex shader
-	var u_Translation = gl.getUniformLocation(gl.program, 'u_Translation');
-	// ...
-	gl.uniform4f(u_Translation, Tx, Ty, Tz, 0.0);
-	// Set the color for clearing <canvas>
-	// ...
-	// Draw a triangle
-	gl.drawArrays(gl.TRIANGLES, 0, n);
-}
-function initVertexBuffers(gl) {
-	var vertices = new Float32Array([
-	0.0.0, 0.5, -0.5, -0.5, 0.5, -0.5
-	]);
-	var n = 3; // The number of vertices
-	// ...
-	return n;
-}
-
-
-// RotatedTriangle.js
-// Vertex shader program
-var VSHADER_SOURCE =
-	'attribute vec4 a_Position;\n' +
-	'uniform float u_CosB, u_SinB;\n' +
-	'void main() {\n' +
-	'	gl_Position.x = a_Position.x * u_CosB - a_Position.y * u_SinB;\n' +
-	'	gl_Position.y = a_Position.x * u_SinB + a_Position.y * u_CosB;\n' +
-	'	gl_Position.z = a_Position.z;\n' +
-	'	gl_Position.w = 1.0;\n' +
-	'}\n';
-// Fragment shader program
-// ...
-// Rotation angle
-var ANGLE = 90.0;
-function main() {
-	// ...
-	// Get the rendering context for WebGL
-	var gl = getWebGLContext(canvas);
-	// ...
-	// Initialize shaders
-	if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
-	// ...
-	}
-	// Set the positions of vertices
-	var n = initVertexBuffers(gl);
-	// ...
-	// Pass the data required to rotate the shape to the vertex shader
-	var radian = Math.PI * ANGLE / 180.0; // Convert to radians
-	var cosB = Math.cos(radian);
-	var sinB = Math.sin(radian);
-	var u_CosB = gl.getUniformLocation(gl.program, 'u_CosB');
-	var u_SinB = gl.getUnifromLocation(gl.program, 'u_SinB');
-	// ...
-	gl.uniform1f(u_CosB, cosB);
-	gl.uniform1f(u_SinB, sinB);
-	// Set the color for clearing <canvas>
-	// ...
-	// Draw a triangle
-	gl.drawArrays(gl.TRIANGLES, 0, n);
-}
-function initVertexBuffers(gl) {
-	var vertices = new Float32Array([
-	0.0.0, 0.5, -0.5, -0.5, 0.5, -0.5
-	]);
-	var n = 3; // The number of vertices
-	// ...
-	return n;
-}
-
-
-// RotatedTranslatedTriangle.js
-// Vertex shader program
-var VSHADER_SOURCE =
-	'attribute vec4 a_Position;\n' +
-	'uniform mat4 u_ModelMatrix;\n' +
-	'void main() {\n' +
-	'	gl_Position = u_ModelMatrix * a_Position;\n' +
-	'}\n';
-// Fragment shader program
-// ...
-function main() {
-	// ...
-	// Set the positions of vertices
-	var n = initVertexBuffers(gl);
-	// ...
-	// Create Matrix4 object for model transformation
-	var modelMatrix = new Matrix4();
-	// Calculate a model matrix
-	var ANGLE = 60.0; // Rotation angle
-	varTx = 0.5; // Translation distance
-	modelMatrix.setRotate(ANGLE, 0, 0, 1); // Set rotation matrix
-	modelMatrix.translate(Tx, 0, 0); // Multiply modelMatrix by the 
-	// calculated translation matrix
-	// Pass the model matrix to the vertex shader
-	var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
-	// ...
-	gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-	// ...
-	// Draw a triangle
-	gl.drawArrays(gl.TRIANGLES, 0, N);
-}
-function initVertexBuffers(gl) {
-	var vertices = new Float32Array([
-		0.0, 0.3, -0.3, -0.3, 0.3, -0.3
-	]);
-	var n = 3; // The number of vertices
-	// ...
-	return n;
-}
-
-
-// MultiAttributeSize.js
-// Vertex shader program
-var VSHADER_SOURCE =
-	'attribute vec4 a_Position;\n' +
-	'attribute float a_PointSize;\n' +
-	'void main() {\n' +
-	'	gl_Position = a_Position;\n' +
-	'	gl_PointSize = a_PointSize;\n' +
-	'}\n';
-// ...
-function main() {
-	// ...
-	// Set the vertex information
-	var n = initVertexBuffers(gl);
-	// ...
-	// Draw three points
-	gl.drawArrays(gl.POINTS, 0, n);
-}
-function initVertexBuffers(gl) {
-	var vertices = new Float32Array([
-		0.0, 0.5, -0.5, -0.5, 0.5, -0.5
-	]);
-	var n = 3;
-	var sizes = new Float32Array([
-	10.0, 20.0, 30.0 // Point sizes
-	]);
-	// Create a buffer object
-	var vertexBuffer = gl.createBuffer();
-	var sizeBuffer = gl.createBuffer();
-	// ...
-	// Write vertex coordinates to the buffer object and enable it
-	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-	var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-	// ...
-	gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(a_Position);
-	// Write point sizes to the buffer object and enable it
-	gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, sizes, gl.STATIC_DRAW);
-	var a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize');
-	// ...
-	gl.vertexAttribPointer(a_PointSize, 1, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(a_PointSize);
-	// ...
-	return n;
-}
-
-
 // MultiAttributeSize_Interleaved.js
 // Vertex shader program
 var VSHADER_SOURCE =
@@ -423,39 +271,6 @@ function initVertexBuffers(gl) {
 	// ...
 	gl.vertexAttribPointer(a_Color, 3, gl.FLOAT, false, FSIZE * 5, FSIZE * 2);
 	gl.enableVertexAttribArray(a_Color); // Enable buffer allocation
-	// ...
-	return n;
-}
-
-
-Color Triangle (ColoredTriangle.js)
-// HelloTriangle.js
-// Vertex shader program
-var VSHADER_SOURCE =
-	'attribute vec4 a_Position;\n' +
-	'void main() {\n' +
-	'	gl_Position = a_Position;\n' +
-	'}\n';
-// Fragment shader program
-var FSHADER_SOURCE =
-	'void main() {\n' +
-	'	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n' +
-	'}\n';
-function main() {
-	// ...
-	// Set vertex coordinates
-	var n = initVertexBuffers(gl));
-	// ...
-	// Draw a triangle
-	gl.drawArrays(gl.TRIANGLES, 0, n);
-}
-function initVertexBuffers(gl) {
-	var vertices = new Float32Array([
-		0.0, 0.5, -0.5, -0.5, 0.5, -0.5
-	]);
-	var n = 3; // The number of vertices
-	// ...
-	gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
 	// ...
 	return n;
 }
