@@ -1,3 +1,46 @@
+use std::thread;
+use std::sync::Arc;
+use std::sync::Mutex;
+
+fn main() {
+    let v = Arc::new(Mutex::new(vec![1, 2, 3, 4, 5]));
+
+    let mut handles = vec![];
+
+    for i in 0..5 {
+        let mutex = v.clone();
+
+        let handle = thread::spawn(move || {
+            let mut v = mutex.lock().unwrap();
+
+            v[i] = v[i] + 1;
+
+            println!("{:?}", v[i]);
+        });
+
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+/*
+fn main() {
+    let mut x: Box<Vec<i32>> = Box::new(Vec::new());
+    for i in 1..6 {
+        x.push(i);
+    }
+
+    println!("Hello world!");
+
+    for i in 0..5 {
+        println!("The value of x is: {}", x[i]);
+    }
+}
+*/
+/////////////////////////////////////////////////////////////////////////
+
 /*
 fn plus_one(i: i32) -> i32 {
     i + 1

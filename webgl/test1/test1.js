@@ -1,8 +1,11 @@
 var VSHADER_SOURCE = 
 	'attribute vec4 a_Position;\n' +
+	'attribute vec4 a_Color;\n' +
 	'uniform mat4 u_ModelMatrix;\n' +
+	'varying vec4 v_Color;\n' +
 	'void main() {\n' +
 	'	gl_Position = u_ModelMatrix * a_Position;\n' +
+	'	v_Color = a_Color;\n' +
 	'}\n';
 // Fragment shader program
 var FSHADER_SOURCE =
@@ -12,9 +15,208 @@ var FSHADER_SOURCE =
 	'void main() {\n' +
 	'	gl_FragColor = vec4(gl_FragCoord.x/u_Width, 0.0, gl_FragCoord.y/u_Height, 1.0);\n' +
 	'}\n';
+
+
+var TRS = function() {
+	this.translation = [0, 0, 0];
+	this.rotation = [0, 0, 0];
+	this.scale = [1, 1, 1];
+};
+TRS.prototype.getMatrix = function(dst) {
+	dst = dst || new Float32Array(16);
+	var t = this.translation;
+	var r = this.rotation;
+	var s = this.scale;
+	makeTranslation(t[0], t[1], t[2], dst);
+	matrixMultiply(makeXRotation(r[0]), dst, dst);
+	matrixMultiply(makeYRotation(r[1]), dst, dst);
+	matrixMultiply(makeZRotation(r[2]), dst, dst);
+	matrixMultiply(makeScale(s[0], s[1], s[2]), dst, dst);
+	return dst;
+};
+var Node = function(source) {
+	this.children = [];
+	this.localMatrix = makeIdentify();
+	this.worldMatrix = makeIdentify();
+	this.source = source;
+};
+Node.prototype.setParent = function(parent) {
+	// remove us from our parent
+	if (this.parent) {
+		var ndx = this.parent.children.indexOf(this);
+		if (ndx >= 0) {
+			this.parent.children.splice(ndx, 1);
+		}
+	}
+	// add us to our new parent
+	if (parent) {
+		parent.children.push(this);
+	}
+	this.parent = parent;
+};
+Node.prototype.updateWorldMatrix = function(matrix) {
+	var source = this.source;
+	if (source) {
+		source.getMatrix(this.localMatrix);
+	}
+	if (matrix) {
+		// a matrix was passed in so do the math
+		matrixMultiply(this.localMatrix, matrix, this.worldMatrix);
+	} else {
+		// no matrix was passed in so just copy
+		copyMatrix(this.localMatrix, thisWorldMatrix);
+	}
+	// now process all the children
+	var worldMatrix = this.worldMatrix;
+	this.children.forEach(function(child) {
+		child.updateWorldMatrix(worldMatrix);
+	});
+};
+function makeNode(nodeDescription) {
+    var trs  = new TRS();
+    var node = new Node(trs);
+    nodeInfosByName[nodeDescription.name] = {
+		trs: trs,
+		node: node,
+    };
+    trs.translation = nodeDescription.translation || trs.translation;
+    if (nodeDescription.draw !== false) {
+		node.drawInfo = {
+        	uniforms: {
+        		u_colorOffset: [0, 0, 0.6, 0],
+        		u_colorMult: [0.4, 0.4, 0.4, 1],
+        	},
+        	programInfo: programInfo,
+        	bufferInfo: cubeBufferInfo,
+    	};
+    	objectsToDraw.push(node.drawInfo);
+    	objects.push(node);
+    }
+    makeNodes(nodeDescription.children).forEach(function(child) {
+    	child.setParent(node);
+    });
+    return node;
+}
+function makeNodes(nodeDescriptions) {
+	return nodeDescriptions ? nodeDescriptions.map(makeNode) : [];
+}
+
+
+/*
+function drawScene() {
+
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+
+    // Clear the canvas AND the depth buffer.
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Compute the projection matrix
+    var aspect = canvas.clientWidth / canvas.clientHeight;
+    var projectionMatrix =
+        makePerspective(fieldOfViewRadians, aspect, 1, 2000);
+
+    // Compute the camera's matrix using look at.
+    var cameraPosition = [4, 3.5, 10];
+    var target = [0, 3.5, 0];
+    var up = [0, 1, 0];
+    var cameraMatrix = makeLookAt(cameraPosition, target, up);
+
+    // Make a view matrix from the camera matrix.
+    var viewMatrix = makeInverse(cameraMatrix);
+
+    var viewProjectionMatrix = matrixMultiply(viewMatrix, projectionMatrix);
+
+    // Draw objects
+    clock += 0.01;
+
+    // update the local matrices for each object.
+    //nodesByName["left-arm"]
+
+    // Update all world matrices in the scene graph
+    scene.updateWorldMatrix();
+
+    var adjust;
+    var speed = 4;
+    var c = clock * speed;
+    adjust = Math.abs(Math.sin(c));
+    nodeInfosByName["point between feet"].trs.translation[1] = adjust;
+    adjust = Math.sin(c);
+    nodeInfosByName["left-leg" ].trs.rotation[0] =  adjust;
+    nodeInfosByName["right-leg"].trs.rotation[0] = -adjust;
+    adjust = Math.sin(c + 0.1) * 0.4;
+    nodeInfosByName["left-calf" ].trs.rotation[0] = -adjust;
+    nodeInfosByName["right-calf"].trs.rotation[0] =  adjust;
+    adjust = Math.sin(c + 0.1) * 0.4;
+    nodeInfosByName["left-foot" ].trs.rotation[0] = -adjust;
+    nodeInfosByName["right-foot"].trs.rotation[0] =  adjust;
+
+    adjust = Math.sin(c) * 0.4;
+    nodeInfosByName["left-arm" ].trs.rotation[2] =  adjust;
+    nodeInfosByName["right-arm"].trs.rotation[2] =  adjust;
+    adjust = Math.sin(c + 0.1) * 0.4;
+    nodeInfosByName["left-forearm" ].trs.rotation[2] =  adjust;
+    nodeInfosByName["right-forearm"].trs.rotation[2] =  adjust;
+    adjust = Math.sin(c - 0.1) * 0.4;
+    nodeInfosByName["left-hand" ].trs.rotation[2] =  adjust;
+    nodeInfosByName["right-hand"].trs.rotation[2] =  adjust;
+
+    adjust = Math.sin(c) * 0.4;
+    nodeInfosByName["waist"].trs.rotation[1] =  adjust;
+    adjust = Math.sin(c) * 0.4;
+    nodeInfosByName["torso"].trs.rotation[1] =  adjust;
+    adjust = Math.sin(c + 0.25) * 0.4;
+    nodeInfosByName["neck"].trs.rotation[1] =  adjust;
+    adjust = Math.sin(c + 0.5) * 0.4;
+    nodeInfosByName["head"].trs.rotation[1] =  adjust;
+    adjust = Math.cos(c * 2) * 0.4;
+    nodeInfosByName["head"].trs.rotation[0] =  adjust;
+
+    // Compute all the matrices for rendering
+    objects.forEach(function(object) {
+      object.drawInfo.uniforms.u_matrix = matrixMultiply(object.worldMatrix, viewProjectionMatrix);
+    });
+
+    // ------ Draw the objects --------
+
+    var lastUsedProgramInfo = null;
+    var lastUsedBufferInfo = null;
+
+    objectsToDraw.forEach(function(object) {
+      var programInfo = object.programInfo;
+      var bufferInfo = object.bufferInfo;
+      var bindBuffers = false;
+
+      if (programInfo !== lastUsedProgramInfo) {
+        lastUsedProgramInfo = programInfo;
+        gl.useProgram(programInfo.program);
+
+        // We have to rebind buffers when changing programs because we
+        // only bind buffers the program uses. So if 2 programs use the same
+        // bufferInfo but the 1st one uses only positions the when the
+        // we switch to the 2nd one some of the attributes will not be on.
+        bindBuffers = true;
+      }
+
+      // Setup all the needed attributes.
+      if (bindBuffers || bufferInfo !== lastUsedBufferInfo) {
+        lastUsedBufferInfo = bufferInfo;
+        setBuffersAndAttributes(gl, programInfo.attribSetters, bufferInfo);
+      }
+
+      // Set the uniforms.
+      setUniforms(programInfo.uniformSetters, object.uniforms);
+
+      // Draw
+      gl.drawArrays(gl.TRIANGLES, 0, bufferInfo.numElements);
+    });
+    requestAnimationFrame(drawScene);
+  }
+  */
+
+
 // Rotation angle (degrees/second)
 var ANGLE_STEP = 90.0;
-var Tx = 0.5; // Translation distance
 function main() {
 	// Retrieve <canvas> element
 	var canvas = document.getElementById('webgl');
@@ -125,7 +327,9 @@ function initEventHandlers(canvas, current) {
 			var dy = factor * (y - lastY);
 			// Limit x-axis rotation angle to -90 to 90 degrees
 			// currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
-			current[0] += 20.0;
+			var now = Date.now();
+			var elapsed = now - g_last; // milliseconds
+			current[0] -= 4 * (ANGLE_STEP * elapsed) / 1000.0;
 			current[1] += dx / 10.0;
 			current[2] -= dy / 10.0;
 		}
@@ -139,7 +343,7 @@ function draw(gl, n, current, modelMatrix, u_ModelMatrix) {
 	for (var i = -1; i < n - 1; i++) {
 		for (var j = -1; j < n - 1; j++) {
 			// Set up rotation matrix
-			modelMatrix.setTranslate(Tx * i + current[1], Tx * j + current[2], 0);
+			modelMatrix.setTranslate(0.5 * i + current[1], 0.5 * j + current[2], 0);
 			modelMatrix.rotate(current[0], 0, 0, 1);
 			// Pass the rotation matrix to the vertex shader
 			gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
