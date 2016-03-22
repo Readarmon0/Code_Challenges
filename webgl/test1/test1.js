@@ -251,12 +251,13 @@ function main() {
 	// Matrix4 object for model transformation
 	var modelMatrix = new Matrix4();
 
+	var clickInfo = [false];
 	// Register the event handler
-	initEventHandlers(canvas, current);
+	initEventHandlers(canvas, current, clickInfo);
 
 	// Start to draw a triangle
 	var tick = function() {
-		animate(current); // Update the rotation angle
+		animate(current, clickInfo); // Update the rotation angle
 		draw(gl, n, current, modelMatrix, u_ModelMatrix);
 		requestAnimationFrame(tick); // Request that the browser calls tick
 	};
@@ -303,7 +304,7 @@ function initVertexBuffers(gl) {
 	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	return n;
 }
-function initEventHandlers(canvas, current) {
+function initEventHandlers(canvas, current, clickInfo) {
 	var dragging = false;         // Dragging or not
 	var lastX = -1, lastY = -1;   // Last position of the mouse
 
@@ -314,10 +315,11 @@ function initEventHandlers(canvas, current) {
 		if (rect.left <= x && x < rect.right && rect.top <= y && y < rect.bottom) {
 			lastX = x; lastY = y;
 			dragging = true;
+			clickInfo[0] = true;
 		}
 	};
 
-	canvas.onmouseup = function(ev) { dragging = false;  }; // Mouse is released
+	canvas.onmouseup = function(ev) { dragging = false; clickInfo[0] = false; }; // Mouse is released
 
 	canvas.onmousemove = function(ev) { // Mouse is moved
 		var x = ev.clientX, y = ev.clientY;
@@ -329,7 +331,6 @@ function initEventHandlers(canvas, current) {
 			// currentAngle[0] = Math.max(Math.min(currentAngle[0] + dy, 90.0), -90.0);
 			var now = Date.now();
 			var elapsed = now - g_last; // milliseconds
-			current[0] -= 4 * (ANGLE_STEP * elapsed) / 1000.0;
 			current[1] += dx / 10.0;
 			current[2] -= dy / 10.0;
 		}
@@ -354,21 +355,24 @@ function draw(gl, n, current, modelMatrix, u_ModelMatrix) {
 }
 // Last time when this function was called
 var g_last = Date.now();
-function animate(current) {
+function animate(current, clickInfo) {
 	// Calculate the elapsed time
 	var now = Date.now();
 	var elapsed = now - g_last; // milliseconds
 	g_last = now;
 	// Update the current rotation angle (adjusted by the elapsed time)
-	current[0] = current[0] + (ANGLE_STEP * elapsed) / 1000.0;
+	if (clickInfo[0] == false)
+		current[0] = current[0] + (ANGLE_STEP * elapsed) / 1000.0;
+	else
+		current[0] = current[0] - (ANGLE_STEP * elapsed) / 1000.0;
 	current[0] %= 360;
 }
 function up() {
-  ANGLE_STEP += 10; 
+  ANGLE_STEP += 30; 
 }
 
 function down() {
-  ANGLE_STEP -= 10; 
+  ANGLE_STEP -= 30; 
 }
 
 
