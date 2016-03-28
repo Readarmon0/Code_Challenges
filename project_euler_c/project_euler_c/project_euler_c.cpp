@@ -12,12 +12,12 @@ int sum_tri(int * tokens) {
 	for (i = 1; i <= 5050; i++)
 		sums[i] = tokens[i];
 
-	for (i = 2; i <= 100; i++) {
+	for (i = 2; i <= 15; i++) {
 		sums[i * (i + 1) / 2 - i + 1] += sums[(i - 1) * i / 2];
 		sums[i * (i + 1) / 2] += sums[(i - 1) * i / 2];
 	}
 
-	for (i = 3; i <= 100; i++) {
+	for (i = 3; i <= 15; i++) {
 		for (j = i * (i + 1) / 2 - i + 2; j <= i * (i + 1) / 2 - 1; j++) {
 			if (sums[j - i] > sums[j - i + 1])
 				sums[j] += sums[j - i];
@@ -27,16 +27,16 @@ int sum_tri(int * tokens) {
 	}
 
 	int tkn_cnt = 1;
-	for (i = 1; i <= 100; i++) {
+	for (i = 1; i <= 15; i++) {
 		for (j = 1; j <= i; j++) {
-			// cout << sums[tkn_cnt] << " ";
+			cout << sums[tkn_cnt] << " ";
 			tkn_cnt++;
 		}
-		// cout << endl;
+		cout << endl;
 	}
 
 	int max = 0;
-	for (i = 4951; i <= 5050; i++) {
+	for (i = 106; i <= 5050; i++) {
 		if (max < sums[i])
 			max = sums[i];
 	}
@@ -59,11 +59,11 @@ int main() {
 			token = strtok_s(cstr, " ", &next_token);
 			while (token) {
 				tokens[i] = atoi(token);
-				// cout << tokens[i] << " ";
+				cout << tokens[i] << " ";
 				token = strtok_s(NULL, " ", &next_token);
 				i++;
 			}
-			// cout << endl;
+			cout << endl;
 		}
 		myfile.close();
 	}
