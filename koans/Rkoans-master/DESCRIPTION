@@ -1,0 +1,18 @@
+Package: Rkoans
+Maintainer: Who to complain to <daspringate@gmail.com>
+Author: David Springate
+Version: 0.1
+License: GPL-3
+Title: R Koans
+Description: A package for learning R through test-driven development
+Depends:
+    testthat,
+    stringr
+Suggests:
+    roxygen2
+Collate:
+    'Rkoans-package.r'
+    'koan_reader.R'
+    'koans.R'
+    'koan_tester.R'
+    'wisdom.R'
